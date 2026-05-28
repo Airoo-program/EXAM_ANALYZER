@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam Mistake Analyzer</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --navy: #1a2744;
+    --green: #22c55e;
+    --green-dark: #16a34a;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --bg: #f4f6fb;
+    --card: #ffffff;
+    --text: #1a2744;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  nav {
+    background: var(--navy);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 56px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-brand {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #fff;
+    letter-spacing: .04em;
+  }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a {
+    color: rgba(255,255,255,.75);
+    text-decoration: none;
+    font-size: .875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color .2s;
+  }
+  .nav-links a:hover, .nav-links a.active { color: #fff; }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .hero {
+    text-align: center;
+    padding: 3rem 1rem 2rem;
+  }
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: .5rem;
+  }
+  .hero p { color: var(--muted); font-size: .95rem; }
+
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 1rem;
+    padding: 1rem 1.5rem 2rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .card {
+    background: #e8eaf0;
+    border-radius: 12px;
+    padding: 1.5rem 1rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: .5rem;
+  }
+  .card-icon {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    margin-bottom: .25rem;
+  }
+  .icon-green  { background: var(--green); }
+  .icon-navy   { background: var(--navy); }
+  .icon-orange { background: #ea580c; }
+  .icon-lime   { background: #84cc16; }
+
+  .card h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: .9rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .card p { font-size: .78rem; color: var(--muted); line-height: 1.45; }
+  .btn {
+    margin-top: .5rem;
+    background: #6b7280;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: .45rem 1.2rem;
+    font-size: .8rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .2s, transform .15s;
+  }
+  .btn:hover { background: var(--navy); transform: translateY(-1px); }
+
+  .progress-section {
+    max-width: 600px;
+    margin: 0 auto 3rem;
+    padding: 0 1.5rem;
+  }
+  .progress-card {
+    background: #e8eaf0;
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+  .donut-wrap { position: relative; flex-shrink: 0; }
+  .donut-label {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+  .donut-label .pct {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--green);
+  }
+  .donut-label .lbl { font-size: .65rem; color: var(--muted); }
+  .progress-text h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--navy);
+  }
+  .progress-text p { color: var(--muted); font-size: .85rem; margin-top: .25rem; }
+
+  .page-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 3rem;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: .25rem;
+  }
+  .page-sub { color: var(--muted); font-size: .875rem; margin-bottom: 1.5rem; }
+
+  label { font-size: .85rem; font-weight: 500; color: var(--navy); display: block; margin-bottom: .35rem; }
+  textarea, input, select {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: .65rem .9rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .875rem;
+    color: var(--text);
+    background: #fff;
+    outline: none;
+    transition: border-color .2s;
+    resize: vertical;
+  }
+  textarea:focus, input:focus, select:focus { border-color: var(--navy); }
+
+  .form-row { margin-bottom: 1rem; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .topic-pills { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .5rem; }
+  .pill {
+    border: 1.5px solid var(--border);
+    border-radius: 999px;
+    padding: .3rem .85rem;
+    font-size: .78rem;
+    cursor: pointer;
+    background: #fff;
+    transition: all .2s;
+  }
+  .pill.selected { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  .analyze-btn {
+    width: 100%;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: .85rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 1.25rem;
+    transition: background .2s, transform .15s;
+    letter-spacing: .02em;
+  }
+  .analyze-btn:hover { background: #0f172a; transform: translateY(-2px); }
+
+  #results { margin-top: 2rem; display: none; }
+  .result-header {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .weakness-bars { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 1.5rem; }
+  .bar-top { display: flex; justify-content: space-between; font-size: .8rem; margin-bottom: .25rem; }
+  .bar-name { font-weight: 500; }
+  .bar-pct { color: var(--muted); }
+  .bar-track { height: 10px; background: var(--border); border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+  .bar-fill.high   { background: var(--red); }
+  .bar-fill.medium { background: var(--amber); }
+  .bar-fill.low    { background: var(--green); }
+
+  .insight-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .insight-card { background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 1rem; }
+  .insight-icon { font-size: 1.5rem; margin-bottom: .35rem; }
+  .insight-title { font-weight: 600; font-size: .85rem; color: var(--navy); margin-bottom: .2rem; }
+  .insight-body { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+
+  .rec-item {
+    background: #f0fdf4;
+    border: 1.5px solid #bbf7d0;
+    border-radius: 10px;
+    padding: .75rem 1rem;
+    font-size: .82rem;
+    color: #15803d;
+    margin-bottom: .6rem;
+    display: flex; align-items: flex-start; gap: .6rem;
+  }
+  .rec-item::before { content: '→'; font-weight: 700; flex-shrink: 0; margin-top: .05rem; }
+
+  .report-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 1.25rem; text-align: center; }
+  .stat-num { font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: .1rem; }
+  .stat-label { font-size: .78rem; color: var(--muted); }
+
+  .history-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+  .history-table th { background: var(--navy); color: #fff; padding: .6rem .8rem; text-align: left; font-family: 'Syne', sans-serif; font-size: .78rem; }
+  .history-table th:first-child { border-radius: 8px 0 0 0; }
+  .history-table th:last-child  { border-radius: 0 8px 0 0; }
+  .history-table td { padding: .6rem .8rem; border-bottom: 1px solid var(--border); }
+  .history-table tr:hover td { background: #f8fafc; }
+  .badge { display: inline-block; padding: .15rem .55rem; border-radius: 999px; font-size: .72rem; font-weight: 600; }
+  .badge-red   { background: #fee2e2; color: var(--red); }
+  .badge-amber { background: #fef3c7; color: #d97706; }
+  .badge-green { background: #dcfce7; color: #16a34a; }
+
+  .plan-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: .4rem; margin-bottom: 2rem; }
+  .day-card { background: #fff; border: 1.5px solid var(--border); border-radius: 10px; padding: .6rem .3rem; text-align: center; font-size: .7rem; }
+  .day-card .day-name { font-weight: 700; color: var(--navy); margin-bottom: .3rem; font-size: .72rem; }
+  .day-dot { width: 28px; height: 28px; border-radius: 50%; margin: 0 auto .3rem; display: flex; align-items: center; justify-content: center; font-size: .7rem; font-weight: 600; }
+  .dot-done     { background: var(--green); color: #fff; }
+  .dot-today    { background: var(--navy); color: #fff; }
+  .dot-upcoming { background: var(--border); color: var(--muted); }
+
+  .plan-items { display: flex; flex-direction: column; gap: .75rem; }
+  .plan-item { background: #fff; border: 1.5px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; }
+  .plan-item-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+  .pi-math    { background: #dbeafe; }
+  .pi-grammar { background: #fef3c7; }
+  .pi-reading { background: #dcfce7; }
+  .pi-science { background: #fce7f3; }
+  .plan-item-body { flex: 1; }
+  .plan-item-title { font-weight: 600; font-size: .875rem; color: var(--navy); }
+  .plan-item-sub   { font-size: .78rem; color: var(--muted); margin-top: .1rem; }
+  .plan-item-dur   { font-family: 'Syne', sans-serif; font-size: .8rem; font-weight: 700; color: var(--navy); }
+
+  .spinner-wrap { text-align: center; padding: 1.5rem 0; display: none; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto .75rem; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 520px) {
+    .two-col { grid-template-columns: 1fr; }
+    .plan-week { grid-template-columns: repeat(4, 1fr); }
+    .hero h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">EXAM MISTAKE ANALYZER</div>
+  <div class="nav-links">
+    <a class="active" onclick="showPage('home', this)">Home</a>
+    <a onclick="showPage('analyzer', this)">Start Analyzer</a>
+    <a onclick="showPage('reports', this)">Reports</a>
+    <a onclick="showPage('studyplan', this)">Study Plan</a>
+  </div>
+</nav>
+
+<!-- HOME -->
+<div id="page-home" class="page active">
+  <div class="hero">
+    <h1>Welcome to Exam Mistake Analyzer</h1>
+    <p>Analyze your mistakes. Learn your weaknesses. Improve your performance.</p>
+  </div>
+  <div class="cards-grid">
+    <div class="card">
+      <div class="card-icon icon-green">📊</div>
+      <h3>Start Analyzer</h3>
+      <p>Input your exam details and start analyzing your mistakes.</p>
+      <button class="btn" onclick="showPage('analyzer', document.querySelector('.nav-links a:nth-child(2)'))">Start Now</button>
+    </div>
+    <div class="card">
+      <div class="card-icon icon-navy">ℹ️</div>
+      <h3>About the Tool</h3>
+      <p>Learn how the tool works and how it can help you improve.</p>
+      <button class="btn" onclick="showAbout()">Learn More</button>
+    </div>
+    <div class="card">
+      <div class="card-icon icon-orange">📈</div>
+      <h3>View Reports</h3>
+      <p>View your mistake summary, study plan, and reports.</p>
+      <button class="btn" onclick="showPage('reports', document.querySelector('.nav-links a:nth-child(3)'))">View Reports</button>
+    </div>
+    <div class="card">
+      <div class="card-icon icon-lime">📋</div>
+      <h3>Study Plan</h3>
+      <p>Get your personalized study plan and recommendations.</p>
+      <button class="btn" onclick="showPage('studyplan', document.querySelector('.nav-links a:nth-child(4)'))">Go to Study Plan</button>
+    </div>
+  </div>
+  <div class="progress-section">
+    <div class="progress-card">
+      <div class="donut-wrap">
+        <svg width="110" height="110" viewBox="0 0 110 110">
+          <circle cx="55" cy="55" r="44" fill="none" stroke="#d1d5db" stroke-width="12"/>
+          <circle cx="55" cy="55" r="44" fill="none" stroke="#22c55e" stroke-width="12"
+            stroke-dasharray="276.46" stroke-dashoffset="138.23"
+            stroke-linecap="round" transform="rotate(-90 55 55)"/>
+        </svg>
+        <div class="donut-label">
+          <div class="pct">50%</div>
+          <div class="lbl">Your Progress</div>
+        </div>
+      </div>
+      <div class="progress-text">
+        <h2>Keep going,<br>You're Improving</h2>
+        <p>You've analyzed 3 sessions so far. Keep up the momentum!</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ANALYZER -->
+<div id="page-analyzer" class="page">
+  <div class="page-inner">
+    <div class="page-title">Start Analyzer</div>
+    <div class="page-sub">Enter questions you got wrong or topics where you struggled. We'll find the patterns.</div>
+    <div class="form-row two-col">
+      <div>
+        <label>Subject / Exam</label>
+        <select id="subject">
+          <option value="">Select subject...</option>
+          <option>Mathematics</option>
+          <option>English / Grammar</option>
+          <option>Science</option>
+          <option>History</option>
+          <option>Reading Comprehension</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div>
+        <label>Total Questions</label>
+        <input type="number" id="total-q" placeholder="e.g. 50" min="1">
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Questions You Got Wrong (paste or type)</label>
+      <textarea id="wrong-qs" rows="4" placeholder="e.g. Q3: What is the quadratic formula? Q7: Identify the subject of the sentence..."></textarea>
+    </div>
+    <div class="form-row">
+      <label>Topics You Struggled With</label>
+      <div class="topic-pills" id="topic-pills">
+        <span class="pill" onclick="togglePill(this)">Algebra</span>
+        <span class="pill" onclick="togglePill(this)">Geometry</span>
+        <span class="pill" onclick="togglePill(this)">Grammar</span>
+        <span class="pill" onclick="togglePill(this)">Punctuation</span>
+        <span class="pill" onclick="togglePill(this)">Word Problems</span>
+        <span class="pill" onclick="togglePill(this)">Reading Comprehension</span>
+        <span class="pill" onclick="togglePill(this)">Fractions</span>
+        <span class="pill" onclick="togglePill(this)">Vocabulary</span>
+        <span class="pill" onclick="togglePill(this)">Equations</span>
+        <span class="pill" onclick="togglePill(this)">Essay Writing</span>
+        <span class="pill" onclick="togglePill(this)">Statistics</span>
+        <span class="pill" onclick="togglePill(this)">Scientific Method</span>
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Additional Notes (optional)</label>
+      <textarea id="notes" rows="2" placeholder="e.g. I always mix up their/there/they're, and I rush through word problems..."></textarea>
+    </div>
+    <button class="analyze-btn" onclick="runAnalysis()">🔍 Analyze My Mistakes</button>
+    <div class="spinner-wrap" id="spinner">
+      <div class="spinner"></div>
+      <p style="color:var(--muted); font-size:.85rem;">Analyzing patterns in your mistakes…</p>
+    </div>
+    <div id="results">
+      <div class="result-header">📊 Weakness Analysis</div>
+      <div class="weakness-bars" id="weakness-bars"></div>
+      <div class="result-header">💡 Key Insights</div>
+      <div class="insight-cards" id="insight-cards"></div>
+      <div class="result-header">📚 Personalized Study Recommendations</div>
+      <div class="study-recs" id="study-recs"></div>
+    </div>
+  </div>
+</div>
+
+<!-- REPORTS -->
+<div id="page-reports" class="page">
+  <div class="page-inner">
+    <div class="page-title">Your Reports</div>
+    <div class="page-sub">Overview of all your past analyses and performance trends.</div>
+    <div class="report-grid">
+      <div class="stat-card"><div class="stat-num" style="color:var(--navy)">3</div><div class="stat-label">Sessions Analyzed</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--red)">47%</div><div class="stat-label">Avg. Error Rate</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--green)">+18%</div><div class="stat-label">Improvement This Week</div></div>
+      <div class="stat-card"><div class="stat-num" style="color:var(--amber)">Algebra</div><div class="stat-label">Top Weakness</div></div>
+    </div>
+    <div class="result-header">Session History</div>
+    <table class="history-table">
+      <thead><tr><th>Date</th><th>Subject</th><th>Score</th><th>Top Weakness</th><th>Level</th></tr></thead>
+      <tbody>
+        <tr><td>May 28, 2026</td><td>Mathematics</td><td>62%</td><td>Algebra</td><td><span class="badge badge-red">Needs Work</span></td></tr>
+        <tr><td>May 22, 2026</td><td>English</td><td>74%</td><td>Grammar</td><td><span class="badge badge-amber">Improving</span></td></tr>
+        <tr><td>May 15, 2026</td><td>Science</td><td>85%</td><td>Scientific Method</td><td><span class="badge badge-green">Good</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- STUDY PLAN -->
+<div id="page-studyplan" class="page">
+  <div class="page-inner">
+    <div class="page-title">Your Study Plan</div>
+    <div class="page-sub">Personalized weekly plan based on your weaknesses.</div>
+    <div class="result-header">This Week</div>
+    <div class="plan-week">
+      <div class="day-card"><div class="day-name">MON</div><div class="day-dot dot-done">✓</div><div>Algebra</div></div>
+      <div class="day-card"><div class="day-name">TUE</div><div class="day-dot dot-done">✓</div><div>Grammar</div></div>
+      <div class="day-card"><div class="day-name">WED</div><div class="day-dot dot-done">✓</div><div>Word Probs</div></div>
+      <div class="day-card"><div class="day-name">THU</div><div class="day-dot dot-today">●</div><div>Fractions</div></div>
+      <div class="day-card"><div class="day-name">FRI</div><div class="day-dot dot-upcoming">○</div><div>Reading</div></div>
+      <div class="day-card"><div class="day-name">SAT</div><div class="day-dot dot-upcoming">○</div><div>Review</div></div>
+      <div class="day-card"><div class="day-name">SUN</div><div class="day-dot dot-upcoming">○</div><div>Rest 😴</div></div>
+    </div>
+    <div class="result-header">Today's Focus — Fractions & Decimals</div>
+    <div class="plan-items">
+      <div class="plan-item"><div class="plan-item-icon pi-math">🔢</div><div class="plan-item-body"><div class="plan-item-title">Adding & Subtracting Fractions</div><div class="plan-item-sub">Review common denominators and mixed numbers</div></div><div class="plan-item-dur">30 min</div></div>
+      <div class="plan-item"><div class="plan-item-icon pi-grammar">📝</div><div class="plan-item-body"><div class="plan-item-title">Grammar: Subject-Verb Agreement</div><div class="plan-item-sub">Practice with compound subjects and tricky cases</div></div><div class="plan-item-dur">20 min</div></div>
+      <div class="plan-item"><div class="plan-item-icon pi-reading">📖</div><div class="plan-item-body"><div class="plan-item-title">Reading: Inference Questions</div><div class="plan-item-sub">Focus on drawing conclusions from passage context</div></div><div class="plan-item-dur">25 min</div></div>
+      <div class="plan-item"><div class="plan-item-icon pi-science">🔬</div><div class="plan-item-body"><div class="plan-item-title">Mock Quiz — Mixed Topics</div><div class="plan-item-sub">10-question timed review across all weak areas</div></div><div class="plan-item-dur">15 min</div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showPage(id, link) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    if (link) link.classList.add('active');
+  }
+
+  function showAbout() {
+    alert('📘 About the Tool\n\nExam Mistake Analyzer helps students identify patterns in their wrong answers. Input your mistakes, select struggled topics, and the system clusters them to reveal your true weak spots — then generates a personalized study plan to fix them.');
+  }
+
+  function togglePill(el) { el.classList.toggle('selected'); }
+
+  const keywords = {
+    'Algebra':               ['algebra','variable','equation','linear','quadratic','factor','polynomial','x=','solve for'],
+    'Geometry':              ['geometry','angle','triangle','circle','area','perimeter','volume','shape','parallel','perpendicular'],
+    'Fractions':             ['fraction','numerator','denominator','mixed number','improper','decimal','ratio','percent'],
+    'Equations':             ['equation','solve','balance','expression','inequality','formula'],
+    'Statistics':            ['mean','median','mode','range','probability','data','graph','chart','average'],
+    'Word Problems':         ['word problem','story problem','real-world','applied','how many','how much','total','combined'],
+    'Grammar':               ['grammar','subject','verb','tense','agreement','noun','pronoun','their','there','its'],
+    'Punctuation':           ['comma','period','semicolon','colon','apostrophe','quote','exclamation','punctuation'],
+    'Vocabulary':            ['vocabulary','synonym','antonym','define','meaning','word choice','context clue'],
+    'Essay Writing':         ['essay','paragraph','thesis','argument','evidence','conclusion','introduction','writing'],
+    'Reading Comprehension': ['reading','passage','comprehension','main idea','inference','tone','author','theme'],
+    'Scientific Method':     ['hypothesis','experiment','variable','control','observation','conclusion','data','scientific'],
+  };
+
+  function scoreText(text) {
+    const t = text.toLowerCase();
+    const scores = {};
+    for (const [topic, kws] of Object.entries(keywords)) {
+      scores[topic] = 0;
+      for (const kw of kws) {
+        const regex = new RegExp(kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi');
+        const matches = t.match(regex);
+        if (matches) scores[topic] += matches.length;
+      }
+    }
+    return scores;
+  }
+
+  function runAnalysis() {
+    const subject = document.getElementById('subject').value;
+    const wrongQs = document.getElementById('wrong-qs').value;
+    const notes   = document.getElementById('notes').value;
+    const selectedPills = [...document.querySelectorAll('.pill.selected')].map(p => p.textContent);
+
+    if (!wrongQs.trim() && selectedPills.length === 0) {
+      alert('Please enter at least one wrong question or select a topic you struggled with.');
+      return;
+    }
+
+    document.getElementById('spinner').style.display = 'block';
+    document.getElementById('results').style.display = 'none';
+
+    setTimeout(() => {
+      const textScores = scoreText(wrongQs + ' ' + notes);
+      selectedPills.forEach(p => { if (textScores[p] !== undefined) textScores[p] += 3; else textScores[p] = 3; });
+
+      const subjectMap = {
+        'Mathematics': ['Algebra','Geometry','Fractions','Equations','Statistics','Word Problems'],
+        'English / Grammar': ['Grammar','Punctuation','Vocabulary','Essay Writing','Reading Comprehension'],
+        'Science': ['Scientific Method'],
+      };
+      if (subject && subjectMap[subject]) subjectMap[subject].forEach(t => { if (textScores[t] !== undefined) textScores[t] += 1; });
+
+      let entries = Object.entries(textScores).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+      if (entries.length === 0) entries.push(['General Understanding', 3], ['Problem Solving', 2]);
+
+      const maxScore = entries[0][1];
+      const topWeaknesses = entries.slice(0, 5).map(([name, score]) => ({ name, pct: Math.round((score / maxScore) * 100) }));
+
+      renderResults(topWeaknesses);
+      document.getElementById('spinner').style.display = 'none';
+      document.getElementById('results').style.display = 'block';
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 1200);
+  }
+
+  function renderResults(weaknesses) {
+    const barsEl = document.getElementById('weakness-bars');
+    barsEl.innerHTML = '';
+    weaknesses.forEach(w => {
+      const level = w.pct >= 70 ? 'high' : w.pct >= 40 ? 'medium' : 'low';
+      barsEl.innerHTML += `<div class="bar-item"><div class="bar-top"><span class="bar-name">${w.name}</span><span class="bar-pct">${w.pct}% weakness</span></div><div class="bar-track"><div class="bar-fill ${level}" style="width:0%" data-target="${w.pct}%"></div></div></div>`;
+    });
+    setTimeout(() => { document.querySelectorAll('.bar-fill').forEach(b => { b.style.width = b.dataset.target; }); }, 100);
+
+    const top = weaknesses[0];
+    document.getElementById('insight-cards').innerHTML = `
+      <div class="insight-card"><div class="insight-icon">🎯</div><div class="insight-title">Primary Weak Area</div><div class="insight-body"><strong>${top.name}</strong> appears most in your mistakes. Focus here first.</div></div>
+      <div class="insight-card"><div class="insight-icon">🔍</div><div class="insight-title">Pattern Found</div><div class="insight-body">You struggle across <strong>${weaknesses.length} topic(s)</strong>. Targeted practice can fix this in 2–3 weeks.</div></div>
+      <div class="insight-card"><div class="insight-icon">⚡</div><div class="insight-title">Quick Win</div><div class="insight-body">Just <strong>20 min/day</strong> on your weakest topic can boost your score by 10–15 points.</div></div>`;
+
+    const recs = {
+      'Algebra': 'Practice solving linear equations daily. Start with one-step, then two-step equations.',
+      'Geometry': 'Draw diagrams for every geometry problem. Use flashcards for formulas.',
+      'Fractions': 'Master finding common denominators. Practice converting between fractions, decimals, and percents.',
+      'Equations': 'Work through 5 equations per day. Focus on isolating the variable step-by-step.',
+      'Statistics': 'Memorize mean/median/mode definitions. Practice reading and interpreting graphs.',
+      'Word Problems': 'Underline key numbers and the question asked. Write out the equation before solving.',
+      'Grammar': 'Review subject-verb agreement rules. Create sentences using their/there/they\'re correctly.',
+      'Punctuation': 'Read sentences aloud to feel where pauses belong. Practice comma rules one at a time.',
+      'Vocabulary': 'Learn 5 new words per day using context clues. Use them in your own sentences.',
+      'Essay Writing': 'Practice writing a clear thesis. Use Point-Evidence-Analysis structure.',
+      'Reading Comprehension': 'Summarize each paragraph in one sentence. Identify the author\'s purpose.',
+      'Scientific Method': 'Memorize the 6 steps. Identify variables in practice scenarios.',
+    };
+    const recEl = document.getElementById('study-recs');
+    recEl.innerHTML = '';
+    weaknesses.slice(0, 4).forEach(w => {
+      const rec = recs[w.name] || `Review your notes and textbook on ${w.name}. Practice with past exam questions.`;
+      recEl.innerHTML += `<div class="rec-item"><span><strong>${w.name}:</strong> ${rec}</span></div>`;
+    });
+  }
+</script>
+</body>
+</html>
